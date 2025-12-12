@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: difftestor-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      # 1. 上传/临时文件挂载到 backend 目录下 (因为 WORKDIR 是 /app/backend)
+      - ./backend/uploads:/app/backend/uploads
+      - ./backend/temp:/app/backend/temp
+      - ./backend/results:/app/backend/results
+      
+      # 2. 【关键】标准程序挂载到 /app 根目录下
+      # 这样 ../../standard-programs 就能正好找到 /app/standard-programs
+      
+    networks:
+      - difftestor-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: difftestor-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - difftestor-network
+    restart: unless-stopped
+
+networks:
+  difftestor-network:
+    driver: bridge

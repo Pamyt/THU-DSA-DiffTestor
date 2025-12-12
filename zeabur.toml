@@ -1,0 +1,12 @@
+[[services]]
+name = "backend"
+# 关键：告诉 Zeabur Dockerfile 在哪里
+dockerfile = "backend/Dockerfile"
+# 关键：告诉 Zeabur 上下文是根目录（这样才能 COPY standard-programs）
+context = "."
+
+[[services]]
+name = "frontend"
+# 前端的构建命令
+buildCommand = "cd frontend && npm install && npm run build"
+outputDirectory = "frontend/dist"

@@ -1,0 +1,15 @@
+# 忽略 node_modules，因为依赖会在容器里重新安装
+node_modules
+# 忽略 dist 文件夹，前端 build 产物不需要在 build context 里
+dist
+# 忽略 git 相关文件
+.git
+.gitignore
+# 忽略日志文件
+*.log
+# 忽略系统生成的文件
+.DS_Store
+# 忽略临时目录
+tmp
+.cache
+.vscode
