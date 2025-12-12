@@ -1,236 +1,132 @@
-# THU DSA 对拍系统 (DiffTestor)
+# THU DSA DiffTestor
 
-清华大学数据结构课程自动化对拍测试系统
+清华大学数据结构课程自动化对拍测试平台
 
-## 项目简介
+🌐 **在线访问**: [thu-diff-frontend.zeabur.app](https://thu-diff-frontend.zeabur.app/)
 
-这是一个全栈Web应用,用于自动化测试数据结构课程的编程作业。系统可以对用户提交的程序与标准程序进行大量测试用例的对拍,快速发现程序错误。
+## 功能说明
 
-## 功能特性
+本平台支持 **PA1 至 PA4 共 11 道题目**的对拍自测。
 
-- ✅ 支持多个PA(Programming Assignment)和多道题目
-- ✅ 网页界面选择PA和题目
-- ✅ 上传C++源文件(.cpp)
-- ✅ 服务器端自动编译(g++ -std=c++17 -O2)
-- ✅ 自动进行最多10000次对拍测试
-- ✅ 实时显示测试进度
-- ✅ 详细的测试结果展示(输入、标准输出、实际输出)
-- ✅ 第一次错误时自动停止并报告详情
-- ✅ 全部通过时显示成功信息
+系统会自动：
+1. 编译你上传的 C++ 源文件（使用 `g++ -std=c++17 -O2`）
+2. 按对数随机法生成 100 组测试输入
+3. 执行你的程序并与标准输出进行逐行比对
+4. 在第一个不符合时停止并显示详细错误信息（输入、预期输出、实际输出）
 
-## 技术栈
+## 使用方法
 
-### 前端
-- React 18
-- TypeScript
-- Tailwind CSS
-- Vite
-- Axios
+### 1. 访问网站
+打开 [thu-diff-frontend.zeabur.app](https://thu-diff-frontend.zeabur.app/)
 
-### 后端
-- Node.js
-- Express
-- TypeScript
-- Multer (文件上传)
+### 2. 选择题目
+- 在页面中选择对应的 PA（PA1 / PA2 / PA3 / PA4）
+- 点击具体的题目卡片
 
-## 项目结构
+### 3. 上传代码
+- 点击上传区域或拖拽 `.cpp` 文件
+- 点击"开始对拍"按钮
 
-```
-THU-DSA-DiffTestor/
-├── frontend/              # 前端应用
-│   ├── src/
-│   │   ├── components/   # React组件
-│   │   ├── api/         # API调用
-│   │   ├── types/       # TypeScript类型定义
-│   │   ├── App.tsx      # 主应用组件
-│   │   └── main.tsx     # 入口文件
-│   ├── package.json
-│   └── vite.config.ts
-├── backend/              # 后端服务
-│   ├── src/
-│   │   ├── routes/      # API路由
-│   │   ├── services/    # 业务逻辑
-│   │   ├── types/       # TypeScript类型定义
-│   │   ├── config/      # 配置文件
-│   │   └── index.ts     # 服务器入口
-│   ├── package.json
-│   └── tsconfig.json
-├── standard-programs/    # 标准程序目录
-│   ├── PA1/
-│   ├── PA2/
-│   ├── PA3/
-│   └── PA4/
-├── package.json         # 根目录package.json
-└── README.md
-```
+### 4. 查看结果
+- **全部通过**：显示绿色成功提示，说明 100 组测试用例全部通过
+- **对拍失败**：显示红色错误提示，包含：
+  - 失败的测试用例编号
+  - 输入数据
+  - 标准程序的输出
+  - 你的程序的输出
+- 可以展开"查看详情"查看所有已执行的测试用例
 
-## 快速开始
+## 重要说明
 
-### 1. 安装依赖
+### ⚠️ 测试通过不等价于 OJ 通过
 
+由于测试数据生成的局限性，**在本系统上通过不代表一定能在 OJ 上通过**。
+
+常见情况：
+- ✅ 本系统通过 + ❌ OJ 不通过 → 请检查可能存在的**类型错误**（如 `int` / `long long`）、**边界条件**、**特殊输入处理**等
+- ❌ 本系统不通过 → 程序存在逻辑错误，需要修改
+
+### 📝 标准程序说明
+
+所有标准程序均为：
+1. 经 OJ 提交后测试通过的程序
+2. 在以下 Docker 环境下编译：
+   ```bash
+   docker run --rm \
+     --platform linux/amd64 \
+     -v "$(pwd):/app" \
+     node:18-slim
+   ```
+3. 使用 `g++ -std=c++17 -O2` 编译选项
+
+### 🤝 贡献标准程序
+
+如果你有其他题目的标准程序（已通过 OJ）并愿意分享，欢迎：
+- 在 GitHub 提交 Issue
+- 发送邮件至：[sliverm@outlook.com](mailto:sliverm@outlook.com)
+
+## 免责声明
+
+**本项目仅供学习交流使用，严禁用于违反学术诚信的行为。**
+
+根据《清华大学学生纪律处分管理规定实施细则》第二十一条：
+
+> 有下列违反课程学习纪律情形之一的，给予**警告以上、留校察看以下处分**：
+> 
+> （一）**课程作业抄袭严重的**；  
+> （二）实验报告抄袭严重或者篡改实验数据的；  
+> （三）期中、期末课程论文抄袭严重的；  
+> （四）在课程学习过程中严重弄虚作假的其他情形。
+
+### ✅ 允许的使用方式
+
+- 检验**自己编写**的代码正确性
+- 调试程序逻辑错误，理解算法实现
+- 生成测试用例，验证边界条件
+
+### ❌ 禁止的使用方式
+
+- 抄袭他人代码后使用本工具测试
+- 将本工具用于任何形式的作业代写
+- 提交非本人独立完成的程序作业
+
+**本工具开发者不对使用者的任何学术不端行为承担责任。请遵守学术诚信原则，独立完成作业。**
+
+---
+
+**Made with ❤️ for THU DSA Course**
+EOF
+
+完美！README 已经成功重写为简洁的用户手册版本。主要改进：
+
+## ✅ 完成的修改
+
+### 1. **删除所有技术实现细节**
+- 移除了技术栈说明（React、Express、TypeScript等）
+- 移除了架构图和目录结构
+- 移除了 API 文档
+- 移除了开发/部署指南
+- 移除了配置说明
+
+### 2. **添加关键用户信息**
+- ✅ 在线访问地址：`thu-diff-frontend.zeabur.app`
+- ✅ 明确题目数量：PA1-PA4 共 **11 道题**（不是12道）
+- ✅ 测试用例数量：**100 组**（不是10000组）
+
+### 3. **标准程序编译环境说明**
+按照要求添加了 Docker 环境信息：
 ```bash
-# 安装所有依赖(根目录、前端、后端)
-npm run install:all
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$(pwd):/app" \
+  node:18-slim
 ```
 
-### 2. 配置标准程序
+### 4. **完整的免责声明**
+- 保留了学校纪律处分规定原文
+- 明确标注允许/禁止的使用方式
+- 强调学术诚信原则
 
-将标准程序的可执行文件放入对应目录:
-
-```
-standard-programs/
-├── PA1/
-│   ├── problem1     (或 problem1.exe)
-│   └── problem2     (或 problem2.exe)
-├── PA2/
-│   ├── problem1
-│   ├── problem2
-│   └── problem3
-...
-```
-
-### 3. 启动开发服务器
-
-```bash
-# 同时启动前端和后端
-npm run dev
-
-# 或分别启动
-npm run dev:frontend  # 前端运行在 http://localhost:3000
-npm run dev:backend   # 后端运行在 http://localhost:3001
-```
-
-### 4. 使用系统
-
-1. 打开浏览器访问 `http://localhost:3000`
-2. 选择PA和题目
-3. 上传C++源文件(.cpp)
-4. 系统自动编译并进行对拍测试
-5. 查看测试结果
-
-## 配置说明
-
-### 后端环境变量
-
-复制 `backend/.env.example` 为 `backend/.env` 并根据需要修改:
-
-```env
-PORT=3001
-NODE_ENV=development
-UPLOAD_DIR=./uploads
-TEMP_DIR=./temp
-MAX_TEST_CASES=10000
-```
-
-### 题目配置
-
-题目配置在 `backend/src/config/problems.ts` 中定义:
-
-```typescript
-export const PROBLEMS = {
-  PA1: [
-    { id: 1, name: '题目1' },
-    { id: 2, name: '题目2' }
-  ],
-  PA2: [
-    { id: 1, name: '题目1' },
-    { id: 2, name: '题目2' },
-    { id: 3, name: '题目3' }
-  ],
-  // ...
-};
-```
-
-## 自定义测试数据生成
-
-在 `backend/src/services/diffTestService.ts` 中实现 `generateInput` 函数,根据不同的PA和题目生成相应的测试输入:
-
-```typescript
-function generateInput(pa: string, problem: number): string {
-  // 根据PA和题目编号生成测试输入
-  // 示例:
-  if (pa === 'PA1' && problem === 1) {
-    // 生成PA1题目1的测试数据
-    return '...';
-  }
-  // ...
-}
-```
-
-## 构建生产版本
-
-```bash
-# 构建前端和后端
-npm run build
-
-# 构建后的文件
-# frontend/dist/ - 前端静态文件
-# backend/dist/  - 后端编译后的JS文件
-```
-
-## API接口
-
-### 获取题目列表
-```
-GET /api/diff-test/problems
-```
-
-### 上传程序并开始对拍
-```
-POST /api/diff-test/upload
-Content-Type: multipart/form-data
-
-参数:
-- executable: C++源文件(.cpp)
-- pa: PA编号(如 PA1)
-- problem: 题目编号(如 1)
-
-返回:
-{
-  "testId": "uuid",
-  "message": "对拍测试已开始",
-  "status": "running"
-}
-```
-
-### 获取测试结果
-```
-GET /api/diff-test/result/:testId
-
-返回:
-{
-  "testId": "uuid",
-  "status": "running" | "passed" | "failed",
-  "currentTestCase": 100,
-  "totalTestCases": 10000,
-  "error": { ... },  // 仅在失败时存在
-  "details": [ ... ]  // 测试详情
-}
-```
-
-## 注意事项
-
-1. **环境要求**:服务器需要安装g++编译器(Linux环境)
-2. **标准程序**:确保标准程序已编译并有执行权限
-3. **输入输出**:所有程序必须使用标准输入/输出
-4. **编译设置**:使用g++ -std=c++17 -O2编译,编译超时30秒
-5. **执行超时**:每个测试用例默认超时5秒
-6. **文件格式**:只接受.cpp源文件
-7. **测试数据**:需要根据具体题目实现测试数据生成逻辑
-
-## 后续任务
-
-- [ ] 实现各个题目的测试数据生成逻辑
-- [ ] 添加用户认证系统
-- [ ] 添加测试历史记录
-- [ ] 支持多种编程语言
-- [ ] 添加性能分析功能
-- [ ] 部署到生产环境
-
-## 开发者
-
-开发数据结构课程使用
-
-## 许可证
-
-MIT
+### 5. **贡献渠道**
+- GitHub Issue
+- 邮箱：`sliverm@outlook.com`
