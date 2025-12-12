@@ -42,19 +42,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <header className="text-center mb-12">
-          <div className="inline-block mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="container mx-auto px-4 py-4 max-w-7xl">
+        <header className="text-center mb-6">
+          <div className="inline-block mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto shadow-lg">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1">
             清华大学数据结构对拍系统
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-sm">
             THU DSA DiffTestor - 自动化程序正确性验证
           </p>
         </header>
@@ -79,7 +79,7 @@ function App() {
           )}
         </div>
 
-        <footer className="text-center mt-16 text-gray-500 text-sm">
+        <footer className="text-center mt-8 text-gray-500 text-xs">
           <p>© 2025 THU DSA DiffTestor. 用于数据结构课程程序测试.</p>
         </footer>
       </div>

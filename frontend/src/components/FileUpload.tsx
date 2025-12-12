@@ -45,19 +45,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-xl shadow-xl p-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-800">
+          <h2 className="text-2xl font-bold text-gray-800">
             {pa} - {problemName}
           </h2>
-          <p className="text-gray-600 mt-1">题目 {problem} · 上传你的 C++ 代码文件</p>
+          <p className="text-gray-600 text-sm mt-0.5">题目 {problem} · 上传你的 C++ 代码文件</p>
         </div>
         <button
           onClick={onBack}
-          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 transition-colors"
+          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors text-sm"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           返回
@@ -65,7 +65,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
       </div>
 
       <div
-        className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
           dragActive 
             ? 'border-blue-500 bg-blue-50 scale-105' 
             : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
@@ -86,10 +86,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
           htmlFor="file-upload"
           className="cursor-pointer"
         >
-          <div className="space-y-4">
-            <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+          <div className="space-y-2">
+            <div className="mx-auto w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
               <svg
-                className="h-10 w-10 text-blue-600"
+                className="h-7 w-7 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -103,12 +103,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
               </svg>
             </div>
             <div className="text-gray-600">
-              <span className="text-blue-600 hover:text-blue-700 font-semibold text-lg">
+              <span className="text-blue-600 hover:text-blue-700 font-semibold">
                 点击上传
               </span>
-              <span className="text-lg"> 或拖拽文件到此处</span>
+              <span> 或拖拽文件到此处</span>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               支持 .cpp 文件 (将在服务器端使用 g++ -std=c++17 -O2 编译)
             </p>
           </div>
@@ -116,10 +116,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
       </div>
 
       {selectedFile && (
-        <div className="mt-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -127,7 +127,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
               <p className="text-sm font-semibold text-gray-800">
                 {selectedFile.name}
               </p>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-600">
                 大小: {(selectedFile.size / 1024).toFixed(2)} KB
               </p>
             </div>
@@ -135,7 +135,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
               onClick={() => setSelectedFile(null)}
               className="text-gray-400 hover:text-red-500 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -146,7 +146,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ pa, problem, problemName, onUpl
       <button
         onClick={handleSubmit}
         disabled={!selectedFile}
-        className="w-full mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 px-6 rounded-xl disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-semibold text-lg shadow-lg hover:shadow-xl disabled:shadow-none transform hover:scale-105 disabled:scale-100"
+        className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-lg disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-semibold shadow-lg hover:shadow-xl disabled:shadow-none transform hover:scale-105 disabled:scale-100"
       >
         {selectedFile ? '🚀 开始对拍' : '请先选择文件'}
       </button>

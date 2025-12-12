@@ -439,8 +439,8 @@ function generateMonotonePolygon(n: number): [number, number][] {
 async function compileCpp(cppPath: string): Promise<string> {
   const outputPath = cppPath.replace('.cpp', '');
   try {
-    await execAsync(`g++ -std=c++17 -O2 "${cppPath}" -o "${outputPath}"`, {
-      timeout: 30000, 
+    await execAsync(`nice -n 10 g++ -std=c++17 -O2 "${cppPath}" -o "${outputPath}"`, {
+      timeout: 3000, 
     });
     return outputPath;
   } catch (error: any) {
