@@ -66,7 +66,7 @@
 - 在 GitHub 提交 Issue
 - 发送邮件至：[sliverm@outlook.com](mailto:sliverm@outlook.com)
 
-## 免责声明
+## 声明
 
 **本项目仅供学习交流使用，严禁用于违反学术诚信的行为。**
 
