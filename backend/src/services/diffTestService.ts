@@ -477,7 +477,7 @@ function getStandardProgramPath(pa: string, problem: number): string {
   }
   
   // 标准程序现位于 backend/standard-programs，编译后 __dirname 指向 dist/
-  return path.join(__dirname, `../standard-programs/${pa}/${problemName}`);
+  return path.join(__dirname, `../../standard-programs/${pa}/${problemName}`);
 }
 
 /**
