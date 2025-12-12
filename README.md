@@ -1,6 +1,6 @@
 # THU DSA DiffTestor
 
-清华大学数据结构课程自动化对拍测试平台
+清华大学数据结构课程对拍测试平台
 
 🌐 **在线访问**: [thu-diff-frontend.zeabur.app](https://thu-diff-frontend.zeabur.app/)
 
