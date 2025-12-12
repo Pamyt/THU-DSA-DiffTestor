@@ -21,4 +21,4 @@ export const PROBLEMS = {
   ]
 };
 
-export const MAX_TEST_CASES = 10000;
+export const MAX_TEST_CASES = 1000;

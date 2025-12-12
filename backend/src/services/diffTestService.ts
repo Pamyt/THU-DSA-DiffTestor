@@ -1,4 +1,4 @@
-import { exec,spawn } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
@@ -11,11 +11,51 @@ const execAsync = promisify(exec);
 // 存储测试结果
 const testResults = new Map<string, TestResult>();
 
+// ==========================================
+// 1. 随机数生成工具函数 (对数分布优化)
+// ==========================================
+
 /**
- * 生成随机整数
+ * 生成随机整数 (均匀分布)
+ * 用于：索引选择、操作类型选择 (1/2/3)
  */
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * 生成对数均匀分布的随机整数
+ * 效果：小数字和大数字出现的概率接近。
+ * 例如在 1-10000 中，生成 10 和生成 1000 的概率相似，能有效覆盖边界。
+ */
+function randomLogInt(min: number, max: number): number {
+  if (min > max) [min, max] = [max, min];
+  const effectiveMin = Math.max(1, min);
+  
+  const logMin = Math.log(effectiveMin);
+  const logMax = Math.log(max);
+  
+  const r = logMin + Math.random() * (logMax - logMin);
+  let result = Math.floor(Math.exp(r));
+  
+  // 修正边界
+  if (result < min) result = min;
+  if (result > max) result = max;
+  
+  return result;
+}
+
+/**
+ * 生成带符号的对数随机整数
+ * 用于：坐标、权值 (可能为负的情况)
+ */
+function randomSignedLogInt(limit: number): number {
+  const sign = Math.random() < 0.5 ? 1 : -1;
+  // 在 [1, limit+1] 范围取对数，然后减1以包含0
+  const logMax = Math.log(limit + 1);
+  const r = Math.random() * logMax;
+  const magnitude = Math.floor(Math.exp(r)); // 这里不需要减1，让他稍微大一点点也没事
+  return sign * magnitude;
 }
 
 /**
@@ -37,139 +77,127 @@ function randomString(length: number): string {
   return result;
 }
 
+// ==========================================
+// 2. 数据生成逻辑 (generateInput)
+// ==========================================
+
 /**
  * 生成测试输入数据
  */
 function generateInput(pa: string, problem: number): string {
   if (pa === 'PA1') {
     if (problem === 1) {
-      // Gift题目
-      // n ≤ 40, 0 < c1i, c2i, P ≤ 10^9
-      const n = randomInt(1, 40);
-      const P = randomInt(1, 1000000000);
+      // Gift
+      const n = randomLogInt(1, 40);
+      const P = randomLogInt(1, 1000000000);
       let input = `${n} ${P}\n`;
       
       for (let i = 0; i < n; i++) {
-        const c1 = randomInt(1, 1000000000);
-        const c2 = randomInt(1, 1000000000);
+        const c1 = randomLogInt(1, 1000000000);
+        const c2 = randomLogInt(1, 1000000000);
         input += `${c1} ${c2}\n`;
       }
-      
       return input;
+
     } else if (problem === 2) {
-      // filename题目
-      // N, M ≤ 1000, K ≤ 100
-      const N = randomInt(1, 1000);
-      const M = randomInt(1, 1000);
-      const K = randomInt(1, 100);
+      // filename
+      const N = randomLogInt(1, 1000);
+      const M = randomLogInt(1, 1000);
+      const K = randomLogInt(1, 100);
       const A = randomString(N);
       const B = randomString(M);
-      
       return `${N} ${M} ${K}\n${A}\n${B}\n`;
     }
+
   } else if (pa === 'PA2') {
     if (problem === 1) {
-      // Risk题目
-      // 1 ≤ n ≤ 10^6
-      const n = randomInt(1, 1000000);
+      // Risk
+      const n = randomLogInt(1, 1000000);
       let input = `${n}\n`;
       
-      // 生成每日确诊人数 xi ≤ 2*10^6
       const cases = [];
       for (let i = 0; i < n; i++) {
-        cases.push(randomInt(0, 2000000));
+        cases.push(randomLogInt(0, 2000000));
       }
       input += cases.join(' ') + '\n';
       
-      // 生成追溯天数 mi, 保证 mi ≤ mi-1 + 1, 1 ≤ mi < 2^32
       const m = [];
-      m.push(randomInt(1, 1000));
+      m.push(randomLogInt(1, 1000));
       for (let i = 1; i < n; i++) {
-        m.push(randomInt(1, Math.min(m[i-1] + 1, 10000)));
+        const limit = Math.min(m[i-1] + 1, 10000);
+        m.push(randomInt(1, limit)); 
       }
       input += m.join(' ') + '\n';
       
-      // 生成 T 组阈值, 1 ≤ T ≤ 10^5
-      const T = randomInt(1, 100000);
+      const T = randomLogInt(1, 100000);
       input += `${T}\n`;
       for (let i = 0; i < T; i++) {
-        const p = randomInt(0, 2000000);
-        const q = randomInt(p + 1, 4000000);
+        const p = randomLogInt(0, 2000000);
+        const q = randomLogInt(p + 1, 4000000);
         input += `${p} ${q}\n`;
       }
-      
       return input;
+
     } else if (problem === 2) {
-      // Polynomial题目
-      // 生成随机多项式表达式
-      // 字符集: 0123456789x-+*^()
-      // 次幂 k ≤ 4, 字符串长度 0 < n ≤ 1000000
+      // Polynomial
       const depth = randomInt(1, 4);
       return generatePolynomialExpression(depth);
+
     } else if (problem === 3) {
-      // Triangulation题目
-      // 3 ≤ n ≤ 10^6
-      const n = randomInt(3, 1000000);
+      // Triangulation
+      const n = randomLogInt(3, 1000000);
       let input = `${n}\n`;
       
-      // 生成x-单调多边形
       const points = generateMonotonePolygon(n);
       for (const [x, y] of points) {
         input += `${x} ${y}\n`;
       }
-      
       return input;
     }
+
   } else if (pa === 'PA3') {
     if (problem === 1) {
-      // Match题目
-      // 0 ≤ n ≤ 400,000, 0 ≤ m ≤ 400,000
-      const n = randomInt(0, 400000);
-      const m = randomInt(0, 400000);
+      // Match
+      const n = randomLogInt(0, 400000);
+      const m = randomLogInt(0, 400000);
       
       let input = `${n} ${m}\n`;
       
-      // 初始字符串
       if (n > 0) {
         let initString = '';
         for (let i = 0; i < n; i++) {
-          initString += String.fromCharCode(randomInt(97, 122)); // a-z
+          initString += String.fromCharCode(randomInt(97, 122));
         }
         input += `${initString}\n`;
       } else {
         input += '\n';
       }
       
-      // 生成m个操作
       let currentLen = n;
       for (let i = 0; i < m; i++) {
         const opType = randomInt(1, 4);
         
         if (opType === 1 && currentLen < 400000) {
-          // 插入操作: 1 p c
           const p = randomInt(0, currentLen);
           const c = String.fromCharCode(randomInt(97, 122));
           input += `1 ${p} ${c}\n`;
           currentLen++;
         } else if (opType === 2 && currentLen > 0) {
-          // 删除操作: 2 p
           const p = randomInt(0, currentLen - 1);
           input += `2 ${p}\n`;
           currentLen--;
         } else if (opType === 3 && currentLen > 1) {
-          // 翻转操作: 3 p q
           const p = randomInt(0, currentLen - 1);
           const q = randomInt(p + 1, currentLen);
           input += `3 ${p} ${q}\n`;
         } else if (opType === 4 && currentLen > 0) {
-          // 检测操作: 4 p q len
-          const maxLen = Math.min(10, currentLen); // 限制检测长度
+          const maxLen = Math.min(10, currentLen);
           const len = randomInt(1, maxLen);
           const p = randomInt(0, currentLen - len);
           const q = randomInt(0, currentLen - len);
           input += `4 ${p} ${q} ${len}\n`;
         } else {
-          // 回退到检测操作
+          // Fallback (Avoid empty operations)
           if (currentLen > 0) {
             const maxLen = Math.min(10, currentLen);
             const len = randomInt(1, maxLen);
@@ -179,86 +207,74 @@ function generateInput(pa: string, problem: number): string {
           }
         }
       }
-      
       return input;
+
     } else if (problem === 2) {
-      // Kidd题目
-      // 1 ≤ n < 2^31, 1 ≤ m ≤ 200,000
-      const n = randomInt(1, 2147483647);
-      const m = randomInt(1, 200000);
+      // Kidd
+      const n = randomLogInt(1, 2147483647);
+      const m = randomLogInt(1, 200000);
       
       let input = `${n} ${m}\n`;
       
-      // 生成m个操作
       for (let i = 0; i < m; i++) {
-        // 随机选择 H (翻转) 或 Q (查询)
         const isFlip = Math.random() < 0.6;
+        const s = randomInt(1, n);
+        const maxLen = Math.min(n - s, 100000000); 
+        const len = randomLogInt(0, maxLen); 
+        const t = s + len;
         
         if (isFlip) {
-          // H s t: 翻转操作
-          const s = randomInt(1, n);
-          const t = randomInt(s, Math.min(n, s + 1000000));
           input += `H ${s} ${t}\n`;
         } else {
-          // Q s t: 查询操作
-          const s = randomInt(1, n);
-          const t = randomInt(s, Math.min(n, s + 1000000));
           input += `Q ${s} ${t}\n`;
         }
       }
-      
       return input;
+
     } else if (problem === 3) {
-      // NearestNeighbor题目
-      // 2 ≤ d ≤ 5, 1 ≤ n ≤ 10^5, 1 ≤ q ≤ 2×10^5
-      const d = randomInt(2, 5); // 维数
-      const n = randomInt(1, 100000); // 向量个数
-      const q = randomInt(1, 200000); // 查询个数
+      // NearestNeighbor
+      const d = randomInt(2, 5);
+      const n = randomLogInt(1, 100000);
+      const q = randomLogInt(1, 200000);
       
       let input = `${d} ${n}\n`;
       
-      // 生成n个向量
       for (let i = 0; i < n; i++) {
         const vector = [];
         for (let j = 0; j < d; j++) {
-          vector.push(randomInt(-10000000, 10000000));
+          vector.push(randomSignedLogInt(10000000));
         }
         input += vector.join(' ') + '\n';
       }
       
       input += `${q}\n`;
-      
-      // 生成q个查询
       for (let i = 0; i < q; i++) {
         const query = [];
         for (let j = 0; j < d; j++) {
-          query.push(randomInt(-10000000, 10000000));
+          query.push(randomSignedLogInt(10000000));
         }
         input += query.join(' ') + '\n';
       }
-      
       return input;
     }
+
   } else if (pa === 'PA4') {
     if (problem === 1) {
-      // Game题目
-      // 1 <= N,M <= 100,000
-      const N = randomInt(1, 100000);
-      const M = randomInt(1, Math.min(100000, N * (N - 1) / 2));
+      // Game
+      const N = randomLogInt(1, 100000);
+      const maxM = Math.min(100000, N * (N - 1) / 2);
+      const M = randomLogInt(Math.max(1, N-1), maxM);
       
       let input = `${N} ${M}\n`;
       
-      // 生成每个关卡的速度 1 <= t[i] <= 10,000
       const times = [];
       for (let i = 0; i < N; i++) {
-        times.push(randomInt(1, 10000));
+        times.push(randomLogInt(1, 10000));
       }
       input += times.join(' ') + '\n';
       
-      // 生成M条道路，保证存在一条从1到N的路径
       const edges = new Set<string>();
-      
-      // 需要保证闲缺一条从1到N的路径
+      // 保证连通性的骨架
       for (let i = 1; i < N; i++) {
         const u = randomInt(1, i);
         const v = i + 1;
@@ -268,8 +284,7 @@ function generateInput(pa: string, problem: number): string {
           input += `${u} ${v}\n`;
         }
       }
-      
-      // 增加剩余的边
+      // 随机加边
       while (edges.size < M) {
         const u = randomInt(1, N);
         const v = randomInt(1, N);
@@ -281,93 +296,87 @@ function generateInput(pa: string, problem: number): string {
           }
         }
       }
-      
       return input;
+
     } else if (problem === 2) {
-      // Component题目
-      // 1 <= n, k, q <= 10^6, 0 <= m <= 10^6
-      // 限制数据规模以保证测试速度
-      const n = randomInt(1, 10000);
-      const m = randomInt(0, Math.min(10000, n * (n - 1) / 2));
-      const k = randomInt(1, n);
-      const q = randomInt(1, 10000);
+      // Component
+      const n = randomLogInt(1, 10000);
+      const m = randomLogInt(0, Math.min(10000, n * (n - 1) / 2));
+      const k = randomLogInt(1, n);
+      const q = randomLogInt(1, 10000);
       
       let input = `${n} ${m} ${k} ${q}\n`;
       
-      // 生成点的权值 0 <= a[i] < 10^9
       const weights = [];
       for (let i = 0; i < n; i++) {
-        weights.push(randomInt(0, 1000000000));
+        weights.push(randomLogInt(0, 1000000000));
       }
       input += weights.join(' ') + '\n';
       
-      // 生成m条初始边
       const edges = new Set<string>();
       for (let i = 0; i < m; i++) {
         let u, v;
+        let attempts = 0;
         do {
           u = randomInt(1, n);
           v = randomInt(1, n);
-        } while (u === v && edges.has(`${u}-${v}`));
+          attempts++;
+        } while ((u === v || edges.has(u < v ? `${u}-${v}` : `${v}-${u}`)) && attempts < 100);
         
-        const key = u < v ? `${u}-${v}` : `${v}-${u}`;
-        edges.add(key);
-        input += `${u} ${v}\n`;
+        if (attempts < 100) {
+          const key = u < v ? `${u}-${v}` : `${v}-${u}`;
+          edges.add(key);
+          input += `${u} ${v}\n`;
+        }
       }
       
-      // 生成q个操作
       for (let i = 0; i < q; i++) {
         const op = Math.random() < 0.5 ? 1 : 2;
-        
         if (op === 1) {
-          // 加边操作
           const u = randomInt(1, n);
           const v = randomInt(1, n);
           input += `1 ${u} ${v}\n`;
         } else {
-          // 查询操作
           const u = randomInt(1, n);
           input += `2 ${u}\n`;
         }
       }
-      
       return input;
+
     } else if (problem === 3) {
-      // ChromPoly题目
-      // 1 <= n < 30, 1 <= m < 70
+      // ChromPoly
       const n = randomInt(3, 29);
       const m = randomInt(1, Math.min(69, n * (n - 1) / 2));
       
       let input = `${n} ${m}\n`;
-      
-      // 生成m条不重复的边，不会有自环
       const edges = new Set<string>();
       for (let i = 0; i < m; i++) {
         let u, v;
+        let attempts = 0;
         do {
-          u = randomInt(0, n);
+          u = randomInt(0, n); 
           v = randomInt(0, n);
-        } while (u === v || edges.has(u < v ? `${u}-${v}` : `${v}-${u}`));
+          attempts++;
+        } while ((u === v || edges.has(u < v ? `${u}-${v}` : `${v}-${u}`)) && attempts < 100);
         
-        const key = u < v ? `${u}-${v}` : `${v}-${u}`;
-        edges.add(key);
-        input += `${u} ${v}\n`;
+        if (attempts < 100) {
+          const key = u < v ? `${u}-${v}` : `${v}-${u}`;
+          edges.add(key);
+          input += `${u} ${v}\n`;
+        }
       }
-      
       return input;
     }
   }
   
-  // 默认返回空字符串
   return '';
 }
 
 /**
- * 生成随机多项式表达式
+ * 辅助函数：生成随机多项式
  */
 function generatePolynomialExpression(depth: number): string {
   if (depth === 0 || Math.random() < 0.3) {
-    // 基本情况: 返回 x 或数字
     return Math.random() < 0.5 ? 'x' : String(randomInt(1, 99));
   }
   
@@ -375,7 +384,6 @@ function generatePolynomialExpression(depth: number): string {
   const left = generatePolynomialExpression(depth - 1);
   const right = generatePolynomialExpression(depth - 1);
   
-  // 随机决定是否添加括号、次幂等
   if (Math.random() < 0.3) {
     const power = randomInt(1, 4);
     return `(${left}${op}${right})^${power}`;
@@ -387,48 +395,43 @@ function generatePolynomialExpression(depth: number): string {
 }
 
 /**
- * 生成x-单调多边形
+ * 辅助函数：生成x-单调多边形 (使用对数坐标)
  */
 function generateMonotonePolygon(n: number): [number, number][] {
-  // 生成n个不同的x坐标
   const xCoords: number[] = [];
   const used = new Set<number>();
   
   while (xCoords.length < n) {
-    const x = randomInt(-1000000000, 1000000000);
+    const x = randomSignedLogInt(1000000000);
     if (!used.has(x)) {
       used.add(x);
       xCoords.push(x);
     }
   }
-  
-  // 按x坐标排序
   xCoords.sort((a, b) => a - b);
   
-  // 分成上下两部分
   const mid = Math.floor(n / 2);
   const upperChain: [number, number][] = [];
   const lowerChain: [number, number][] = [];
   
-  // 生成上链(单调增)
-  let prevY = randomInt(-1000000000, 1000000000);
+  let prevY = randomSignedLogInt(1000000000);
   for (let i = 0; i < mid; i++) {
     upperChain.push([xCoords[i], prevY]);
-    prevY += randomInt(1, 100000);
+    prevY += randomLogInt(1, 100000); // 随机增量
   }
   
-  // 生成下链(单调减)
-  prevY = randomInt(-1000000000, 1000000000);
+  prevY = randomSignedLogInt(1000000000);
   for (let i = n - 1; i >= mid; i--) {
     lowerChain.push([xCoords[i], prevY]);
-    prevY -= randomInt(1, 100000);
+    prevY -= randomLogInt(1, 100000); // 随机减量
   }
   
-  // 合并为逆时针顺序
-  const points = [...upperChain, ...lowerChain];
-  
-  return points;
+  return [...upperChain, ...lowerChain];
 }
+
+// ==========================================
+// 3. 核心运行逻辑 (Spawn & Compile)
+// ==========================================
 
 /**
  * 编译C++源文件
@@ -437,7 +440,7 @@ async function compileCpp(cppPath: string): Promise<string> {
   const outputPath = cppPath.replace('.cpp', '');
   try {
     await execAsync(`g++ -std=c++17 -O2 "${cppPath}" -o "${outputPath}"`, {
-      timeout: 30000, // 30秒编译超时
+      timeout: 30000, 
     });
     return outputPath;
   } catch (error: any) {
@@ -446,60 +449,57 @@ async function compileCpp(cppPath: string): Promise<string> {
 }
 
 /**
- * 运行可执行文件
+ * 运行可执行文件 (使用 spawn 替代 exec)
  */
 function runExecutable(execPath: string, input: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    // 1. 启动子进程
+    // 启动子进程
     const child = spawn(execPath, [], {
-      stdio: ['pipe', 'pipe', 'pipe'] // 显式声明 stdin, stdout, stderr
+      stdio: ['pipe', 'pipe', 'pipe']
     });
 
     let stdoutData = '';
     let stderrData = '';
     
-    // 设置超时计时器 (比如 5 秒)
+    // 设置5秒超时，防止死循环
     const timeout = setTimeout(() => {
-      child.kill(); // 杀死进程
+      child.kill();
       reject(new Error('Time Limit Exceeded (5000ms)'));
     }, 5000);
 
-    // 2. 监听标准输出
+    // 收集标准输出
     child.stdout.on('data', (chunk) => {
       stdoutData += chunk.toString();
-      // 防止输出过大撑爆内存 (比如死循环输出)，这里限制 10MB
+      // 限制输出大小为 10MB，防止 OOM
       if (stdoutData.length > 10 * 1024 * 1024) {
         child.kill();
-        reject(new Error('Output Limit Exceeded'));
+        reject(new Error('Output Limit Exceeded (10MB)'));
       }
     });
 
-    // 3. 监听标准错误
+    // 收集标准错误
     child.stderr.on('data', (chunk) => {
       stderrData += chunk.toString();
     });
 
-    // 4. 监听 stdin 错误 (防止 Broken pipe 导致 Node 崩溃)
+    // 防止 Broken Pipe 报错
     child.stdin.on('error', (err) => {
-      // 这里的错误通常可以忽略，或者记录日志
-      // console.error('Stdin write error:', err);
+      // 忽略或记录
     });
 
-    // 5. 监听进程关闭
+    // 监听结束
     child.on('close', (code) => {
-      clearTimeout(timeout); // 清除超时计时器
+      clearTimeout(timeout);
       
       if (code === 0) {
         resolve(stdoutData.trim());
       } else {
-        // 如果非正常退出 (Runtime Error)
         const errorMsg = stderrData || `Process exited with code ${code}`;
         reject(new Error(`Runtime Error: ${errorMsg}`));
       }
     });
 
-    // 6. 写入输入数据并关闭 stdin
-    // 这是最关键的一步：数据直接流入进程，不经过 Shell 解析
+    // 写入输入数据 (避免 Shell 解析问题)
     try {
       child.stdin.write(input);
       child.stdin.end();
@@ -509,6 +509,7 @@ function runExecutable(execPath: string, input: string): Promise<string> {
     }
   });
 }
+
 /**
  * 获取标准程序路径
  */
@@ -525,12 +526,11 @@ function getStandardProgramPath(pa: string, problem: number): string {
     throw new Error(`未知的题目: ${pa} - ${problem}`);
   }
   
-  // 标准程序现位于 backend/standard-programs，编译后 __dirname 指向 dist/
   return path.join(__dirname, `../../standard-programs/${pa}/${problemName}`);
 }
 
 /**
- * 运行对拍测试
+ * 运行对拍测试主函数
  */
 export async function runDiffTest(
   testId: string,
@@ -538,7 +538,6 @@ export async function runDiffTest(
   problem: number,
   userCppPath: string
 ): Promise<void> {
-  // 初始化测试结果
   const result: TestResult = {
     testId,
     status: 'running',
@@ -548,80 +547,74 @@ export async function runDiffTest(
   };
   testResults.set(testId, result);
 
-  const standardExecPath = getStandardProgramPath(pa, problem);
-
-  // 检查标准程序是否存在
-  if (!fs.existsSync(standardExecPath)) {
-    result.status = 'failed';
-    result.error = {
-      input: '',
-      expectedOutput: '',
-      actualOutput: '',
-      testCaseNumber: 0
-    };
-    console.error(`标准程序不存在: ${standardExecPath}`);
-    return;
-  }
-
+  let standardExecPath = '';
   let userExecPath = '';
 
   try {
-    // 编译用户的C++程序
+    standardExecPath = getStandardProgramPath(pa, problem);
+    
+    if (!fs.existsSync(standardExecPath)) {
+      throw new Error(`标准程序不存在: ${standardExecPath}`);
+    }
+    
+    // 赋予标准程序执行权限
+    try {
+      fs.chmodSync(standardExecPath, '755');
+    } catch (e) {
+      // 忽略
+    }
+
     userExecPath = await compileCpp(userCppPath);
-    // 运行测试用例
+
     for (let i = 1; i <= MAX_TEST_CASES; i++) {
       result.currentTestCase = i;
 
-      // 生成测试输入
       const input = generateInput(pa, problem);
 
-      // 运行标准程序
       const expectedOutput = await runExecutable(standardExecPath, input);
-
-      // 运行用户程序
       const actualOutput = await runExecutable(userExecPath, input);
 
-      // 比较输出
       const passed = expectedOutput === actualOutput;
 
+      // 截断过长的输出，防止前端卡死
+      const TRUNCATE_LEN = 1000;
       const detail: TestDetail = {
         testCaseNumber: i,
-        input,
-        expectedOutput,
-        actualOutput,
+        input: input.length > TRUNCATE_LEN ? input.substring(0, TRUNCATE_LEN) + '... (truncated)' : input,
+        expectedOutput: expectedOutput.length > TRUNCATE_LEN ? expectedOutput.substring(0, TRUNCATE_LEN) + '... (truncated)' : expectedOutput,
+        actualOutput: actualOutput.length > TRUNCATE_LEN ? actualOutput.substring(0, TRUNCATE_LEN) + '... (truncated)' : actualOutput,
         passed
       };
 
       result.details.push(detail);
 
       if (!passed) {
-        // 第一次错误就停止
         result.status = 'failed';
         result.error = {
-          input,
-          expectedOutput,
-          actualOutput,
+          input: input.length > 2000 ? input.substring(0, 2000) + '...' : input,
+          expectedOutput: expectedOutput.substring(0, 2000),
+          actualOutput: actualOutput.substring(0, 2000),
           testCaseNumber: i
         };
         break;
       }
     }
 
-    // 如果所有测试都通过
     if (result.status === 'running') {
       result.status = 'passed';
     }
 
   } catch (error: any) {
     result.status = 'failed';
+    const errorMsg = error.message || 'Unknown Error';
     result.error = {
       input: '',
       expectedOutput: '',
-      actualOutput: error.message,
+      actualOutput: `System Error: ${errorMsg}`,
       testCaseNumber: result.currentTestCase
     };
+    console.error(`Test failed for ${testId}:`, error);
   } finally {
-    // 清理用户上传的文件和编译产物
     try {
       if (fs.existsSync(userCppPath)) {
         fs.unlinkSync(userCppPath);
