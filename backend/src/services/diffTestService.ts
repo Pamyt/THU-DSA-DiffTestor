@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec,spawn } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
@@ -448,18 +448,67 @@ async function compileCpp(cppPath: string): Promise<string> {
 /**
  * 运行可执行文件
  */
-async function runExecutable(execPath: string, input: string): Promise<string> {
-  try {
-    const { stdout } = await execAsync(`echo "${input}" | "${execPath}"`, {
-      timeout: 5000, // 5秒超时
-      maxBuffer: 1024 * 1024 // 1MB缓冲
+function runExecutable(execPath: string, input: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // 1. 启动子进程
+    const child = spawn(execPath, [], {
+      stdio: ['pipe', 'pipe', 'pipe'] // 显式声明 stdin, stdout, stderr
     });
-    return stdout.trim();
-  } catch (error: any) {
-    throw new Error(`执行失败: ${error.message}`);
-  }
-}
 
+    let stdoutData = '';
+    let stderrData = '';
+    
+    // 设置超时计时器 (比如 5 秒)
+    const timeout = setTimeout(() => {
+      child.kill(); // 杀死进程
+      reject(new Error('Time Limit Exceeded (5000ms)'));
+    }, 5000);
+
+    // 2. 监听标准输出
+    child.stdout.on('data', (chunk) => {
+      stdoutData += chunk.toString();
+      // 防止输出过大撑爆内存 (比如死循环输出)，这里限制 10MB
+      if (stdoutData.length > 10 * 1024 * 1024) {
+        child.kill();
+        reject(new Error('Output Limit Exceeded'));
+      }
+    });
+
+    // 3. 监听标准错误
+    child.stderr.on('data', (chunk) => {
+      stderrData += chunk.toString();
+    });
+
+    // 4. 监听 stdin 错误 (防止 Broken pipe 导致 Node 崩溃)
+    child.stdin.on('error', (err) => {
+      // 这里的错误通常可以忽略，或者记录日志
+      // console.error('Stdin write error:', err);
+    });
+
+    // 5. 监听进程关闭
+    child.on('close', (code) => {
+      clearTimeout(timeout); // 清除超时计时器
+      
+      if (code === 0) {
+        resolve(stdoutData.trim());
+      } else {
+        // 如果非正常退出 (Runtime Error)
+        const errorMsg = stderrData || `Process exited with code ${code}`;
+        reject(new Error(`Runtime Error: ${errorMsg}`));
+      }
+    });
+
+    // 6. 写入输入数据并关闭 stdin
+    // 这是最关键的一步：数据直接流入进程，不经过 Shell 解析
+    try {
+      child.stdin.write(input);
+      child.stdin.end();
+    } catch (err) {
+      clearTimeout(timeout);
+      reject(err);
+    }
+  });
+}
 /**
  * 获取标准程序路径
  */
